@@ -9,7 +9,7 @@ spec:
     namespace: ""
     server: https://kubernetes.default.svc
   source:
-    path: kustomize/overlays/kaito
+    path: kustomize/overlays/dev
     repoURL: https://github.com/azure-samples/aks-store-demo
     targetRevision: main
     kustomize:
