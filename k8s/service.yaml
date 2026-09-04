@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pipelines-java-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: pipelines-java
+  ports:
+  - port: 80
+    targetPort: 8080
