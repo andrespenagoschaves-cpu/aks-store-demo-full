@@ -13,6 +13,7 @@ spec:
       labels:
         app: documentdb
     spec:
+    enableServiceLinks: false 
       containers:
       - name: documentdb
         image: ghcr.io/documentdb/documentdb/documentdb-local:pg17-0.112.0
