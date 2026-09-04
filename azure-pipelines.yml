@@ -4,26 +4,115 @@ trigger:
       - main
 
 variables:
-  imageRepository: 'pipelines-java'
   acrServiceConnection: 'sc-acr'
   acrName: 'acrpipelinesjava14858.azurecr.io'
   tag: '$(Build.BuildId)'
 
 stages:
 - stage: Build
-  displayName: 'Construir y publicar imagen'
+  displayName: 'Construir y publicar imágenes'
   jobs:
-  - job: BuildAndPush
-    pool:
-      vmImage: 'ubuntu-latest'
+  - job: BuildOrderService
+    displayName: 'Build order-service'
+    pool: { vmImage: 'ubuntu-latest' }
     steps:
     - task: Docker@2
-      displayName: 'Build and push image to ACR'
       inputs:
         containerRegistry: '$(acrServiceConnection)'
-        repository: '$(imageRepository)'
+        repository: 'order-service'
         command: 'buildAndPush'
-        Dockerfile: '**/Dockerfile'
+        Dockerfile: 'src/order-service/Dockerfile'
+        buildContext: 'src/order-service'
+        tags: |
+          $(tag)
+          latest
+
+  - job: BuildMakelineService
+    displayName: 'Build makeline-service'
+    pool: { vmImage: 'ubuntu-latest' }
+    steps:
+    - task: Docker@2
+      inputs:
+        containerRegistry: '$(acrServiceConnection)'
+        repository: 'makeline-service'
+        command: 'buildAndPush'
+        Dockerfile: 'src/makeline-service/Dockerfile'
+        buildContext: 'src/makeline-service'
+        tags: |
+          $(tag)
+          latest
+
+  - job: BuildProductService
+    displayName: 'Build product-service'
+    pool: { vmImage: 'ubuntu-latest' }
+    steps:
+    - task: Docker@2
+      inputs:
+        containerRegistry: '$(acrServiceConnection)'
+        repository: 'product-service'
+        command: 'buildAndPush'
+        Dockerfile: 'src/product-service/Dockerfile'
+        buildContext: 'src/product-service'
+        tags: |
+          $(tag)
+          latest
+
+  - job: BuildStoreFront
+    displayName: 'Build store-front'
+    pool: { vmImage: 'ubuntu-latest' }
+    steps:
+    - task: Docker@2
+      inputs:
+        containerRegistry: '$(acrServiceConnection)'
+        repository: 'store-front'
+        command: 'buildAndPush'
+        Dockerfile: 'src/store-front/Dockerfile'
+        buildContext: 'src/store-front'
+        tags: |
+          $(tag)
+          latest
+
+  - job: BuildStoreAdmin
+    displayName: 'Build store-admin'
+    pool: { vmImage: 'ubuntu-latest' }
+    steps:
+    - task: Docker@2
+      inputs:
+        containerRegistry: '$(acrServiceConnection)'
+        repository: 'store-admin'
+        command: 'buildAndPush'
+        Dockerfile: 'src/store-admin/Dockerfile'
+        buildContext: 'src/store-admin'
+        tags: |
+          $(tag)
+          latest
+
+  - job: BuildVirtualCustomer
+    displayName: 'Build virtual-customer'
+    pool: { vmImage: 'ubuntu-latest' }
+    steps:
+    - task: Docker@2
+      inputs:
+        containerRegistry: '$(acrServiceConnection)'
+        repository: 'virtual-customer'
+        command: 'buildAndPush'
+        Dockerfile: 'src/virtual-customer/Dockerfile'
+        buildContext: 'src/virtual-customer'
+        tags: |
+          $(tag)
+          latest
+
+  - job: BuildVirtualWorker
+    displayName: 'Build virtual-worker'
+    pool: { vmImage: 'ubuntu-latest' }
+    steps:
+    - task: Docker@2
+      inputs:
+        containerRegistry: '$(acrServiceConnection)'
+        repository: 'virtual-worker'
+        command: 'buildAndPush'
+        Dockerfile: 'src/virtual-worker/Dockerfile'
+        buildContext: 'src/virtual-worker'
         tags: |
           $(tag)
           latest
@@ -33,8 +122,7 @@ stages:
   dependsOn: Build
   jobs:
   - deployment: DeployToAKS
-    pool:
-      vmImage: 'ubuntu-latest'
+    pool: { vmImage: 'ubuntu-latest' }
     environment: 'aks-devops-lab'
     strategy:
       runOnce:
@@ -51,6 +139,12 @@ stages:
               kubernetesCluster: 'aks-devops-lab'
               namespace: 'default'
               manifests: |
-                k8s/deployment.yaml
-                k8s/service.yaml
-              containers: '$(acrName)/$(imageRepository):$(tag)'
+                k8s/aks-store-all-in-one.yaml
+              containers: |
+                $(acrName)/order-service:$(tag)
+                $(acrName)/makeline-service:$(tag)
+                $(acrName)/product-service:$(tag)
+                $(acrName)/store-front:$(tag)
+                $(acrName)/store-admin:$(tag)
+                $(acrName)/virtual-customer:$(tag)
+                $(acrName)/virtual-worker:$(tag)
